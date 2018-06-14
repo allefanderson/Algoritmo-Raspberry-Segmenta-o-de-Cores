@@ -1,0 +1,27 @@
+import numpy
+import cv2
+import time
+import serial
+ser = serial.Serial("/dev/ttyUSB0", 115200)
+cam = cv2.VideoCapture(0)
+kernel = numpy.ones((3 ,3), numpy.uint8)
+fonte = cv2.FONT_HERSHEY_SIMPLEX
+while (True):
+ ret, frame = cam.read()
+ gauss = cv2.GaussianBlur(frame, (9,9), 0)
+ rangomax = numpy.array([50, 50, 255]) # B, G, R
+ rangomin = numpy.array([0, 0,90])
+ mask = cv2.inRange(gauss, rangomin, rangomax)
+ opening = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+ x, y, w, h = cv2.boundingRect(opening)
+ eixoy = y+h/2
+ eixox = x+w/2
+ eixoY = str(eixoy)
+ eixoX = str(eixox)
+ cv2.rectangle(frame, (x, y), (x+w, y + h), (0, 255, 0), 3)
+ cv2.circle(frame, (x+w/2, y+h/2), 5, (0, 0, 255), -1)
+ cv2.putText (frame, eixoX+','+eixoY , (x,y), fonte, 2, (255,255,255), 2, cv2.LINE_AA)
+ ser.write(eixoY+":"+eixoX+"*")
+ print eixoX+eixoY
+ cv2.imshow('camera',frame)
+ cv2.waitKey(1)
